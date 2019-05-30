@@ -2,8 +2,18 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints.Key;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.security.KeyStore;
+
 import javax.swing.JPanel;
+import javax.swing.*;
 import java.awt.*;
+
+import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 public class TwoDMinecraft extends JPanel implements Runnable {
     /**
@@ -16,9 +26,14 @@ public class TwoDMinecraft extends JPanel implements Runnable {
     private int range = 50;
     private int gravity = 5;
     private int gravityTimer = 1;
-    private int jumpTimer = 500;
-    private int jumpDistance = 150;
+    private int jumpTimer = 100;
+    private int jumpDistance = 75;
+    private int leftCount = 0;
+    private int downCount = 0;
+    private int rightCount = 0;
+    private int upCount = 0;
     private boolean recentlyJumped = false;
+    private boolean Q = false;
     private int t = 0;
     private int gT = 0;
     private RobotWrapper r = new RobotWrapper();
@@ -32,7 +47,110 @@ public class TwoDMinecraft extends JPanel implements Runnable {
         setFocusable(true);
         screenD = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         
+        InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = getActionMap();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, false), "Q");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_E,  0, false), "E");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, 0, false), "Debug");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A,  0, false), "Left");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, false), "Down");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, false), "Right");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_W,  0, false), "Up");
+        am.put("Left", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		upCount++;
+        		if(upCount > 2) {
+        			upCount = 0;
+        		}
+        	}
+        });
+        am.put("Down", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		downCount++;
+        		if(downCount > 2) {
+        			downCount = 0;
+        		}
+        	}
+        });
+        am.put("Right", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		rightCount++;
+        		if(rightCount > 2) {
+        			rightCount = 0;
+        		}
+        	}
+        });
+        am.put("Up", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		upCount++;
+        		if(upCount > 2) {
+        			upCount = 0;
+        		}
+        	}
+        });
+        am.put("Q", new AbstractAction() { 
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Q = true;
+			}
+        });
         
+        am.put("E", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		Q = false;
+        	}
+        });
+        am.put("Debug", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		if(debug == true) {
+        			debug = false;
+        		}
+        		else {
+        			debug = true;
+        		}
+        	}
+        });
         setPreferredSize(screenD);
         screenW = (int)screenD.getWidth();
         screenH = (int)screenD.getHeight();
@@ -57,13 +175,7 @@ public class TwoDMinecraft extends JPanel implements Runnable {
                     g2d.setColor(toPaint[b][c].color);
                     g2d.drawLine(toPaint[b][c].getX1(), toPaint[b][c].getY1(), toPaint[b][c].getX2(), toPaint[b][c].getY2());
                 }
-            }/*
-            g2d.setColor(Color.YELLOW);
-            if(a == 0) {
-            	g2d.drawLine(toPaint[0][0].getX1(), toPaint[0][0].getY1(), toPaint[0][0].getX2() + 10, toPaint[0][0].getY2());
-            	g2d.drawLine(toPaint[0][toPaint[0].length - 1].getX1(), toPaint[0][toPaint[0].length - 1].getY1(), toPaint[0][toPaint[0].length - 1].getX2(), toPaint[0][toPaint[0].length - 1].getY2());
-            	g2d.drawLine(toPaint[toPaint.length - 1][toPaint[0].length - 1].getX1(), toPaint[toPaint.length - 1][toPaint[0].length - 1].getY1(), toPaint[toPaint.length - 1][toPaint[0].length - 1].getX2() + 10, toPaint[toPaint.length - 1][toPaint[0].length - 1].getY2());
-            }*/
+            }
         }
             
         
@@ -74,7 +186,13 @@ public class TwoDMinecraft extends JPanel implements Runnable {
             g2d.drawString("Mouse X: " + MouseInfo.getPointerInfo().getLocation().x + "Mouse Y: " + MouseInfo.getPointerInfo().getLocation().y, 200, 200);
             g2d.drawString("Center X: " + screenW/2 + ", Center Y: " + screenH/2, 200, 250);
             g2d.drawString("Player X: " + sprites.player.x + ", Player Y: " + sprites.player.y, 200, 300);
-           g2d.drawString("Player X: " + sprites.player.spritePointArr[0][0].x + "Player Y: " + sprites.player.spritePointArr[0][0].y, 200, 350);
+            g2d.drawString("Player X: " + sprites.player.spritePointArr[0][0].x + "Player Y: " + sprites.player.spritePointArr[0][0].y, 200, 350);
+            if(Q) {
+            	g2d.drawString("Q", 200, 400);
+            }
+            else {
+            	g2d.drawString("E", 200, 400);
+            }
         }
     }
 
