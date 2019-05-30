@@ -18,6 +18,7 @@ public class TwoDMinecraft extends JPanel implements Runnable {
     private int gravityTimer = 1;
     private int jumpTimer = 500;
     private int jumpDistance = 150;
+    private boolean recentlyJumped = false;
     private int t = 0;
     private int gT = 0;
     private RobotWrapper r = new RobotWrapper();
@@ -104,7 +105,10 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 	        	if(dxdy[1] < 0) {
 	        		if(t > jumpTimer) {
 	        			t = 0;
-	        			sprites.player.move(0, -jumpDistance);
+	        			if(recentlyJumped == false){
+	        				sprites.player.move(0, -jumpDistance);
+	        				recentlyJumped = true;
+	        			}
 	        		}
 	        		else {
 	        			sprites.player.move(0, 0);
@@ -172,6 +176,7 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 		                    
 		                else { /* at the bottom */
 		                	sprites.player.setPos(sprites.player.x, sprites.allSprites.get(i).y - sprites.player.returnHeight());
+		                	recentlyJumped = false;
 		                }
 	            }
 	        }
