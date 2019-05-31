@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
 import javax.swing.JPanel;
 import javax.swing.*;
@@ -30,26 +31,29 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
     private int jumpTimer = 100;
     private int jumpDistance = 75;
     private int leftCount = 0;
-    private boolean left = false;
-    private boolean right = false;
-    private boolean up = false;
-    private boolean down = false;
     private int downCount = 0;
     private int rightCount = 0;
     private int upCount = 0;
-    private Color overlayColor = new Color(230, 208, 0, 90);
-    private boolean recentlyJumped = false;
-    private boolean Q = false;
     private int t = 0;
     private int gT = 0;
-    private RobotWrapper r = new RobotWrapper();
+    private boolean left = false;
+    private boolean inventoryUp = true;
+    private boolean right = false;
+    private boolean up = false;
+    private boolean down = false;
+    private boolean recentlyJumped = false;
+    private boolean Q = false;
     private boolean debug = true;
+    private boolean initStep1 = true;
+    private boolean initStep2 = false;
+    private Color overlayColor = new Color(230, 208, 0, 90);    
+    private RobotWrapper r = new RobotWrapper();    
     private Sprites sprites;
     private Thread animator;
     private Dimension screenD;
     private Sprite[][] world;
-    private boolean initStep1 = true;
-    private boolean initStep2 = false;
+    private int[] inventory = new int[3];
+    
     private MyRectangle selectRect;
     public TwoDMinecraft(){
         super();
@@ -80,6 +84,23 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, false), "Down");
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, false), "Right");
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_W,  0, false), "Up");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, 0, false), "Inventory Toggle");
+        am.put("Inventory Toggle", new AbstractAction() {
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+        	public void actionPerformed(ActionEvent e) {
+        		if(inventoryUp) {
+        			inventoryUp = false;
+        		}
+        		else {
+        			inventoryUp = true;
+        		}
+        	}
+        });
         am.put("Left", new AbstractAction() {
         	/**
 			 * 
@@ -179,6 +200,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Q = true;
+				r.isEnabled = true;
 			}
         });
         
@@ -191,6 +213,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
 			@Override
         	public void actionPerformed(ActionEvent e) {
         		Q = false;
+        		r.isEnabled = false;
         	}
         });
         am.put("Debug", new AbstractAction() {
@@ -214,8 +237,22 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
     
     @Override
 	public void mouseClicked(MouseEvent arg0) {//rest of mouseevents at bottom
-		if(selectRect.x >= 0 && selectRect.y >= 0 && selectRect.x < world[0].length && selectRect.y < world.length) {
-			world[selectRect.x/25][selectRect.y/25] = null;
+		if(selectRect.x/25 >= 0 && selectRect.y/25 - 4 >= 0 && selectRect.x/25 < world[0].length && selectRect.y/25 - 4 < world.length) {
+			//inventory 0 = dirt
+			//inventory 1 = grass
+			//inventory 2 = stone
+			
+			if(world[selectRect.y/25 - 4][selectRect.x/25].id.equals("D")) {
+				inventory[0]++;
+			}
+			if(world[selectRect.y/25 - 4][selectRect.x/25].id.equals("G")) {
+				inventory[1]++;
+			}
+			if(world[selectRect.y/25 - 4][selectRect.x/25].id.equals("S")) {
+				inventory[2]++;
+			}
+			
+			world[selectRect.y/25 - 4][selectRect.x/25] = null;
 		}
 		
 	}
@@ -250,6 +287,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
         	initStep2 = true;
         	initStep1 = false;
         }
+        
         if(initStep2) {
         	for(int a = 0; a < sprites.allSprites.size(); a++) {
             	Line[][] toPaint = sprites.allSprites.get(a).returnLinesForSprite();
@@ -275,10 +313,12 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
             }
             
                 
-            
-            g2d.setColor(Color.WHITE);
-            g2d.drawRect(screenW/2 - range, (int) (screenH/2 - range*1.5), range*2, range*2);
-            g2d.fillRect(screenW/2 - range/12, (int)screenH/2 - range/2, range/6, range/6);
+            //display box
+        	if(Q) {
+        		g2d.setColor(Color.WHITE);
+                g2d.drawRect(screenW/2 - range, (int) (screenH/2 - range*1.5), range*2, range*2);
+                g2d.fillRect(screenW/2 - range/12, (int)screenH/2 - range/2, range/6, range/6);
+        	}
             if(debug){
                 g2d.drawString("Mouse X: " + MouseInfo.getPointerInfo().getLocation().x + "Mouse Y: " + MouseInfo.getPointerInfo().getLocation().y, 200, 200);
                 g2d.drawString("Center X: " + screenW/2 + ", Center Y: " + screenH/2, 200, 250);
@@ -307,7 +347,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
             leftRange/=25;
             int rightRange = sprites.allSprites.get(0).upperRightCorner.x + drawRange;
             rightRange/=25;
-            int upRange = sprites.allSprites.get(0).y - drawRange;
+            int upRange = sprites.allSprites.get(0).y - drawRange * 5;
             upRange/=25;
             int downRange = sprites.allSprites.get(0).lowerLeftCorner.y + drawRange;
             downRange/=25;
@@ -373,7 +413,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
         if(down && downCount == 1) {
         	g2d.setColor(overlayColor);
         	g2d.fillRect(sprites.player.x + 25, sprites.player.lowerLeftCorner.y, 25, 25);
-        	selectRect.setPos(sprites.player.x, sprites.player.lowerLeftCorner.y);
+        	selectRect.setPos(sprites.player.x + 25, sprites.player.lowerLeftCorner.y);
         }
         if(right && rightCount == 0) {
         	g2d.setColor(overlayColor);
@@ -383,7 +423,7 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
         if(right && rightCount == 1) {
         	g2d.setColor(overlayColor);
         	g2d.fillRect(sprites.player.upperRightCorner.x, sprites.player.upperRightCorner.y + 25, 25, 25);
-        	selectRect.setPos(sprites.player.upperRightCorner.x, sprites.player.y);
+        	selectRect.setPos(sprites.player.upperRightCorner.x, sprites.player.y + 25);
         }
         if(up && upCount == 0) {
         	g2d.setColor(overlayColor);
@@ -393,7 +433,37 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
         if(up && upCount == 1) {
         	g2d.setColor(overlayColor);
         	g2d.fillRect(sprites.player.x + 25, sprites.player.y -25, 25, 25);
-        	selectRect.setPos(sprites.player.x + 25,  sprites.player.y);
+        	selectRect.setPos(sprites.player.x + 25,  sprites.player.y - 25);
+        }
+        if(inventoryUp) {
+        	int width = inventory.length*30 + 10;
+        	int excess = 0;
+        	if(width > sprites.player.upperRightCorner.x - sprites.player.x) {
+        		excess = width - (sprites.player.upperRightCorner.x - sprites.player.x);
+        	}
+        	g2d.setColor(Color.BLACK);
+        	int a = sprites.player.x - excess/2 + 13;
+        	g2d.fillRect(sprites.player.x - excess/2, sprites.player.y - 45, width, 40);
+        	for(int i = 0; i < inventory.length; i++) {
+        		if(i == 0) {
+        			g2d.setColor(new Color(94, 58, 13));
+        			g2d.fillRect(a, sprites.player.y - 35, 20, 20);
+        			g2d.setColor(Color.WHITE);
+        			g2d.drawString("" + inventory[0], a + 5, sprites.player.y - 25);
+        		}
+        		if(i == 1) {
+        			g2d.setColor(Color.green);
+        			g2d.fillRect(a + 13 + 10, sprites.player.y - 35, 20, 20);
+        			g2d.setColor(Color.WHITE);
+        			g2d.drawString("" + inventory[1], a + 13 + 15, sprites.player.y - 25);
+        		}
+        		if(i == 2) {
+        			g2d.setColor(Color.GRAY);
+        			g2d.fillRect(a + 26 + 20, sprites.player.y - 35, 20, 20);
+        			g2d.setColor(Color.WHITE);
+        			g2d.drawString("" + inventory[2], a + 26 + 25, sprites.player.y - 25);
+        		}
+        	}
         }
     }
 

@@ -38,5 +38,6 @@ public class GrassDirtBlock {
     	}
     	block = new Sprite(p);
     	block.setPos(x, y);
+    	block.id = "G";
 	}
 }

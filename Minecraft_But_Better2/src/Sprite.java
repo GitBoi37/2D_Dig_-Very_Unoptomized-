@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Point;
 public class Sprite{
     public GPoint[][] spritePointArr;
+    public String id = "";
     private int pixelSize = 1;
     int x = 0;
     int y = 0;
