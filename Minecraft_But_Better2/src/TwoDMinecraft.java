@@ -2,24 +2,21 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.security.KeyStore;
-
 import javax.swing.JPanel;
 import javax.swing.*;
 import java.awt.*;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 public class TwoDMinecraft extends JPanel implements Runnable {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private final int worldLength = 500;
+	private int initialSkyGap = 100;
 	private int screenW = 0;
     private int screenH = 0;
     private int DELAY = 2;
@@ -29,6 +26,10 @@ public class TwoDMinecraft extends JPanel implements Runnable {
     private int jumpTimer = 100;
     private int jumpDistance = 75;
     private int leftCount = 0;
+    private boolean left = false;
+    private boolean right = false;
+    private boolean up = false;
+    private boolean down = false;
     private int downCount = 0;
     private int rightCount = 0;
     private int upCount = 0;
@@ -41,12 +42,25 @@ public class TwoDMinecraft extends JPanel implements Runnable {
     private Sprites sprites;
     private Thread animator;
     private Dimension screenD;
+    private Sprite[][] world;
     public TwoDMinecraft(){
         super();
         setBackground(Color.BLUE);
         setFocusable(true);
         screenD = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-        
+        setPreferredSize(screenD);
+        screenW = (int)screenD.getWidth();
+        screenH = (int)screenD.getHeight();
+        r.mouseMove(screenW/2, screenH/2);
+        GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
+        Rectangle graphicsConfigurationBounds = new Rectangle();
+        GraphicsDevice gDevice = graphicsDevices[0];
+        graphicsConfigurationBounds.setRect(gDevice.getDefaultConfiguration().getBounds());
+        screenW = (int) (graphicsConfigurationBounds.getWidth() -graphicsConfigurationBounds.x);
+        screenH = (int) (graphicsConfigurationBounds.getHeight() - graphicsConfigurationBounds.y);
+        sprites = new Sprites(screenW, screenH);
+        createWorld();
         InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = getActionMap();
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, false), "Q");
@@ -64,9 +78,15 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 
 			@Override
         	public void actionPerformed(ActionEvent e) {
-        		upCount++;
-        		if(upCount > 2) {
-        			upCount = 0;
+        		leftCount++;
+        		if(leftCount > 2) {
+        			leftCount = 0;
+        		}
+        		if(!left) {
+        			left = true;
+        			up = false;
+        			down = false;
+        			right = false;
         		}
         	}
         });
@@ -82,6 +102,12 @@ public class TwoDMinecraft extends JPanel implements Runnable {
         		if(downCount > 2) {
         			downCount = 0;
         		}
+        		if(!down) {
+        			down = true;
+        		}
+        		up = false;
+        		left = false;
+        		right = false;
         	}
         });
         am.put("Right", new AbstractAction() {
@@ -96,6 +122,12 @@ public class TwoDMinecraft extends JPanel implements Runnable {
         		if(rightCount > 2) {
         			rightCount = 0;
         		}
+        		if(!right) {
+        			right = true;
+        		}
+        		up = false;
+        		down = false;
+        		left = false;
         	}
         });
         am.put("Up", new AbstractAction() {
@@ -110,6 +142,12 @@ public class TwoDMinecraft extends JPanel implements Runnable {
         		if(upCount > 2) {
         			upCount = 0;
         		}
+        		if(!up) {
+        			up = true;
+        		}
+        		left = false;
+        		right = false;
+        		down = false;
         	}
         });
         am.put("Q", new AbstractAction() { 
@@ -151,18 +189,26 @@ public class TwoDMinecraft extends JPanel implements Runnable {
         		}
         	}
         });
-        setPreferredSize(screenD);
-        screenW = (int)screenD.getWidth();
-        screenH = (int)screenD.getHeight();
-        r.mouseMove(screenW/2, screenH/2);
-        GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
-        Rectangle graphicsConfigurationBounds = new Rectangle();
-        GraphicsDevice gDevice = graphicsDevices[0];
-        graphicsConfigurationBounds.setRect(gDevice.getDefaultConfiguration().getBounds());
-        screenW = (int) (graphicsConfigurationBounds.getWidth() -graphicsConfigurationBounds.x);
-        screenH = (int) (graphicsConfigurationBounds.getHeight() - graphicsConfigurationBounds.y);
-        sprites = new Sprites(screenW, screenH);
+        
+    }
+    public void createWorld() {
+    	world = new Sprite[worldLength][screenW/25];
+    	for(int i = 0; i < worldLength; i++) {
+    		for(int c = 0; c < screenW/25; c++) {
+    			if(i != 0) {
+	    			int a =(int)(Math.random()*2);
+	    			if(a == 0) {
+	    				world[i][c] = (new DirtBlock(c*25, i*25 + initialSkyGap)).block;
+	    			}
+	    			if(a == 1) {
+	    				world[i][c] = (new StoneBlock(c*25, i*25 + initialSkyGap)).block;
+	    			}
+    			}
+    			else {
+    				world[i][c] = (new GrassDirtBlock(c*25, i*25 + initialSkyGap)).block;
+    			}
+    		}
+    	}
     }
     @Override
     public void paintComponent(Graphics g){
@@ -177,6 +223,18 @@ public class TwoDMinecraft extends JPanel implements Runnable {
                 }
             }
         }
+        for(int a = 0; a < world.length; a++) {
+        	for(int b = 0; b < world[a].length; b++) {
+        		Line[][] toPaint = world[a][b].returnLinesForSprite();
+        		for(int c = 0; c < toPaint.length; c++) {
+        			for(int d = 0; d < toPaint[c].length; d++) {
+        				g2d.setColor(toPaint[c][d].color);
+        				g2d.drawLine(toPaint[c][d].getX1(), toPaint[c][d].getY1(), toPaint[c][d].getX2(), toPaint[c][d].getY2());
+        			}
+        		}
+        	}
+        }
+        
             
         
         g2d.setColor(Color.WHITE);
@@ -256,6 +314,43 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 	        else if(sprites.player.y + sprites.player.getBounds().height  > screenH){
 	            sprites.player.setPos(sprites.player.x, screenH - sprites.player.getBounds().height); 
 	        }
+	        for(int i = 0; i < world.length; i++) {
+	        	for(int c = 0; c < world[i].length; c++) {
+	        		double w = 0.5 * (sprites.player.returnWidth() + world[i][c].returnWidth());
+		        	double h = 0.5 * (sprites.player.returnHeight() + world[i][c].returnHeight());
+		        	double centerAX = sprites.player.x + (0.5 * sprites.player.returnWidth());
+		        	double centerAY = sprites.player.y + (0.5 * sprites.player.returnHeight());
+		        	double centerBX = world[i][c].x + (0.5* world[i][c].returnWidth());
+		        	double centerBY = world[i][c].y + (0.5 * world[i][c].returnHeight());
+		        	double dx = centerAX - centerBX;
+		        	double dy = centerAY - centerBY;
+		        	double wy = w * (dy);
+		        	double hx = h * (dx);
+		            
+		            if (Math.abs(dx) <= w && Math.abs(dy) <= h) {
+			            passedSprites = false;
+		            	if (wy > hx)
+		            		//of player
+			                if (wy > -hx) {/* collision at the top */
+			                	sprites.player.setPos(sprites.player.x, world[i][c].lowerLeftCorner.y);
+			                }
+			                    
+			                else {/* on the left */
+			                	sprites.player.setPos(world[i][c].x- sprites.player.returnWidth(), sprites.player.y);
+			                }
+			                    
+			            else
+			                if (wy > -hx) {/* on the right */
+			                	sprites.player.setPos(world[i][c].upperRightCorner.x, sprites.player.y);
+			                }
+			                    
+			                else { /* at the bottom */
+			                	sprites.player.setPos(sprites.player.x, world[i][c].y - sprites.player.returnHeight());
+			                	recentlyJumped = false;
+			                }
+		            }
+	        	}
+	        }/*
 	        for(int i = 1; i < sprites.allSprites.size(); i++) {
 	    		/*
 	        	if(sprites.player.upperRightCorner.x > sprites.allSprites.get(i).x || sprites.player.x < sprites.allSprites.get(i).upperRightCorner.x);{
@@ -263,7 +358,7 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 	        	}
 	        	if(sprites.player.lowerLeftCorner.y > sprites.allSprites.get(i).y || sprites.player.y < sprites.allSprites.get(i).lowerLeftCorner.y) {
 	        		passedSprites = false;
-	        	}*/
+	        	}
 	        	double w = 0.5 * (sprites.player.returnWidth() + sprites.allSprites.get(i).returnWidth());
 	        	double h = 0.5 * (sprites.player.returnHeight() + sprites.allSprites.get(i).returnHeight());
 	        	double centerAX = sprites.player.x + (0.5 * sprites.player.returnWidth());
@@ -279,25 +374,25 @@ public class TwoDMinecraft extends JPanel implements Runnable {
 		            passedSprites = false;
 	            	if (wy > hx)
 	            		//of player
-		                if (wy > -hx) {/* collision at the top */
+		                if (wy > -hx) {/* collision at the top 
 		                	sprites.player.setPos(sprites.player.x, sprites.allSprites.get(i).lowerLeftCorner.y);
 		                }
 		                    
-		                else {/* on the left */
+		                else {/* on the left 
 		                	sprites.player.setPos(sprites.allSprites.get(i).x- sprites.player.returnWidth(), sprites.player.y);
 		                }
 		                    
 		            else
-		                if (wy > -hx) {/* on the right */
+		                if (wy > -hx) {/* on the right 
 		                	sprites.player.setPos(sprites.allSprites.get(i).upperRightCorner.x, sprites.player.y);
 		                }
 		                    
-		                else { /* at the bottom */
+		                else { /* at the bottom 
 		                	sprites.player.setPos(sprites.player.x, sprites.allSprites.get(i).y - sprites.player.returnHeight());
 		                	recentlyJumped = false;
 		                }
 	            }
-	        }
+	        } use if you add enemies or something later*/
         }
     }
     @Override
