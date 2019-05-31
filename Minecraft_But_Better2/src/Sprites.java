@@ -29,7 +29,7 @@ public class Sprites{
             }
         }
         player = new Sprite(p);
-        player.setPos(100, 100);
+        player.setPos(100, 0);
     }
     public void MakeStone() {
     	GPoint[][] p = new GPoint[25][25];

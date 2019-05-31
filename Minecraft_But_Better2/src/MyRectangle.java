@@ -14,4 +14,8 @@ public class MyRectangle extends Rectangle{
         width = c;
         height = d;
     }
+    public void setPos(int x, int y) {
+    	this.x = x;
+    	this.y = y;
+    }
 }
