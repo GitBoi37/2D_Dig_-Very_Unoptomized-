@@ -25,19 +25,19 @@ public class RobotWrapper{
 	        if(mouseX > centerX + range && mouseY > centerY + range){
 	            robot.mouseMove(centerX + range, centerY + range);
 	        }
-	        else if(mouseX < centerX - range && mouseY < centerY - range){
+	        if(mouseX < centerX - range && mouseY < centerY - range){
 	            robot.mouseMove(centerX - range, centerY - range);
 	        }
-	        else if(mouseX < centerX - range){
+	        if(mouseX < centerX - range){
 	            robot.mouseMove(centerX - range, mouseY);
 	        }
-	        else if(mouseY < centerY - range){
+	        if(mouseY < centerY - range){
 	            robot.mouseMove(mouseX, centerY - range);
 	        }
-	        else if(mouseX > centerX + range){
+	        if(mouseX > centerX + range){
 	            robot.mouseMove(centerX + range, mouseY);
 	        }
-	        else if(mouseY > centerY + range){
+	        if(mouseY > centerY + range){
 	            robot.mouseMove(mouseX, centerY + range);
 	        }
 	        dx = mouseX - centerX;
