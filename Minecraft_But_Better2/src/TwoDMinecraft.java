@@ -271,16 +271,18 @@ public class TwoDMinecraft extends JPanel implements Runnable, MouseListener {
     		if(arg0.getButton() == MouseEvent.BUTTON1) {
     			int x = arg0.getXOnScreen();
         		int y = arg0.getYOnScreen();
-        		if(world[y/25 - 5][x/25].id.equals("D")) {
-        			inventory[0]++;
+        		if(y/25 > 5 && x/25 > 0) {
+        			if(world[y/25 - 5][x/25].id.equals("D")) {
+            			inventory[0]++;
+            		}
+            		if(world[y/25 - 5][x/25].id.equals("G")) {
+            			inventory[1]++;
+            		}
+            		if(world[y/25 - 5][x/25].id.equals("S")) {
+            			inventory[2]++;
+            		}
+            		world[y/25-5][x/25] = null;
         		}
-        		if(world[y/25 - 5][x/25].id.equals("G")) {
-        			inventory[1]++;
-        		}
-        		if(world[y/25 - 5][x/25].id.equals("S")) {
-        			inventory[2]++;
-        		}
-        		world[y/25-5][x/25] = null;
     		}
     		else {
     			
